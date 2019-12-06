@@ -25,7 +25,7 @@ public class Tools {
     public static double orthog_dist(Vector3d v1, Vector3d v2, Vector3d v3, Vector3d p){
         Vector3d n = (v2.sub(v1)).cross(v3.sub(v1));
         n.self_normalise();
-        double dist = n.innerProduct(p.sub(v1));
+        double dist = n.dot(p.sub(v1));
         return Math.abs(dist);
     }
 
@@ -33,7 +33,7 @@ public class Tools {
         if(ar.length <= 3) return true;
         Vector3d normal = ar[2].sub(ar[1]).cross(ar[2].sub(ar[0]));
         for(int i = 3; i < ar.length; i++){
-            if(normal.innerProduct(ar[i].sub(ar[0])) != 0){
+            if(normal.dot(ar[i].sub(ar[0])) != 0){
                 return false;
             }
         }
@@ -44,7 +44,7 @@ public class Tools {
         if(ar.length <= 3) return true;
         Vector3d normal = ar[2].getPosition().sub(ar[1].getPosition()).cross(ar[2].getPosition().sub(ar[0].getPosition()));
         for(int i = 3; i < ar.length; i++){
-            if(normal.innerProduct(ar[i].getPosition().sub(ar[0].getPosition())) != 0){
+            if(normal.dot(ar[i].getPosition().sub(ar[0].getPosition())) != 0){
                 return false;
             }
         }

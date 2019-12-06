@@ -6,6 +6,8 @@ import core.Vertex;
 import core.Volume;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K extends Volume> {
@@ -56,8 +58,6 @@ public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K e
             this.addVolume(v);
         }
     }
-
-
 
     public void addFace(F face) {
         if (!hash_faces.contains(face)) {
@@ -155,6 +155,81 @@ public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K e
         }
     }
 
+    @Override
+    public int hashCode() {
+        int code = 0;
+        code += vertices.size();
+        code += edges.size();
+        code += faces.size();
+        code += volumes.size();
+
+        for(Edge e:edges){
+            code += e.getLinked_boundaries().size();
+        }
+        for(Face e:faces){
+            code += e.getLinked_boundaries().size();
+        }
+
+        return code;
+    }
+
+    public Mesh<V,E,F,K> copy(){
+        Mesh<V,E,F,K> newMesh = new_mesh();
+
+        ArrayList<V> vertices = new ArrayList<>();
+        ArrayList<E> edges = new ArrayList<>();
+        ArrayList<F> faces = new ArrayList<>();
+        ArrayList<K> volumes = new ArrayList<>();
+
+        HashMap<V, Integer> vertexHashMap = new HashMap<>();
+        HashMap<E, Integer> edgeHashMap = new HashMap<>();
+        HashMap<F, Integer> faceHashMap = new HashMap<>();
+
+        for(V v:this.vertices){
+            V newVert = new_vertex(
+                    v.getX(),
+                    v.getY(),
+                    v.getZ()
+            );
+            newVert.bindData(Arrays.copyOf(v.getData(), v.getData().length));
+            vertices.add(newVert);
+            vertexHashMap.put(v, vertices.size()-1);
+        }for(E e:this.edges){
+            E newEdge = new_edge(
+                    vertices.get(vertexHashMap.get(e.getV1())),
+                    vertices.get(vertexHashMap.get(e.getV2()))
+            );
+            newEdge.bindData(Arrays.copyOf(e.getData(), e.getData().length));
+            edges.add(newEdge);
+            edgeHashMap.put(e, edges.size()-1);
+        }for(F f:this.faces){
+            Object[] e = new Object[f.getBoundaries().length];
+            for(int i = 0; i < f.getBoundaries().length; i++){
+                e[i] = edges.get(edgeHashMap.get(f.getBoundaries()[i]));
+            }
+            F newFace = new_face((E[]) e);
+            newFace.bindData(Arrays.copyOf(f.getData(), f.getData().length));
+            faces.add(newFace);
+            faceHashMap.put(newFace, faces.size()-1);
+        }for(K v:this.volumes){
+            Object[] e = new Object[v.getBoundaries().length];
+            for(int i = 0; i < v.getBoundaries().length; i++){
+                e[i] = edges.get(faceHashMap.get(v.getBoundaries()[i]));
+            }
+            K newVolume = new_volume((F[]) e);
+            newVolume.bindData(Arrays.copyOf(v.getData(), v.getData().length));
+            volumes.add(newVolume);
+        }
+
+        newMesh.volumes = volumes;
+        newMesh.edges = edges;
+        newMesh.vertices = vertices;
+        newMesh.faces = faces;
+
+        return newMesh;
+    }
+
+    public abstract Mesh<V,E,F,K> new_mesh();
 
     public abstract V new_vertex(double x, double y, double z);
 
@@ -162,7 +237,7 @@ public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K e
 
     public abstract F new_face(E... edges);
 
-    public abstract K new_volume(Face... faces);
+    public abstract K new_volume(F... faces);
 
 
 

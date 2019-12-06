@@ -112,6 +112,12 @@ public class Volume extends Cell<Face, Volume, Volume> {
         volumes.add(volume_1);
 
         Mesh mesh = new Mesh(volumes) {
+
+            @Override
+            public Mesh new_mesh() {
+                return null;
+            }
+
             @Override
             public Vertex new_vertex(double x, double y, double z) {
                 return null;

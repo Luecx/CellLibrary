@@ -17,7 +17,18 @@ public class Face extends Cell<Edge, Face, Volume> {
     public Face(Face other) {
         super();
 
-        this.setBoundaries(other.getBoundaries());
+        Edge[] ar = new Edge[other.boundaries.length];
+        for (int i = 0; i < other.boundaries.length; i++) {
+            //System.out.println(edges[i].getCell());
+            if (other.boundaries[i].getCell() != null) {
+                ar[i] = new Edge(other.boundaries[i]);
+            } else {
+                ar[i] = other.boundaries[i];
+            }
+            ar[i].setCell(this);
+        }
+
+        this.setBoundaries(ar);
         this.setVertices(other.getVertices());
         this.link(other);
     }
@@ -32,9 +43,15 @@ public class Face extends Cell<Edge, Face, Volume> {
             }
         }
 
+        Vertex[] vertices = new Vertex[edges.length];
+        for(int i = 0; i < edges.length; i++){
+            vertices[i] = edges[i].getV1();
+            if(edges[i].getV2() != edges[(i+1) % edges.length].getV1()){
+                throw new RuntimeException("Edges do not form a closed loop!");
+            }
+        }
+        this.setVertices(vertices);
 
-        ArrayList<Vertex> vertices = new ArrayList<>(count.keySet());
-        this.setVertices(vertices.toArray(new Vertex[0]));
         if (!Tools.vectorsAreInPlane(this.getVertices())) {
             throw new RuntimeException("Vertices are not in a 3d-plane!");
         }

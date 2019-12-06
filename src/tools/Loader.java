@@ -27,6 +27,17 @@ public class Loader {
         return out;
     }
 
+    private static String writeData(Container c) {
+        StringBuilder builder = new StringBuilder();
+        double[] data = c.getData();
+        if (data == null || data.length == 0) return "";
+        for (int i = 0; i < data.length - 1; i++) {
+            builder.append(data[i] + " ");
+        }
+        builder.append(data[data.length - 1]);
+        return builder.toString();
+    }
+
     public static void load(String f, Mesh mesh) throws IOException {
         File file = new File(f);
 
@@ -94,17 +105,6 @@ public class Loader {
         mesh.setFaces(faces);
         mesh.process_data();
         //return mesh;
-    }
-
-    private static String writeData(Container c) {
-        StringBuilder builder = new StringBuilder();
-        double[] data = c.getData();
-        if (data == null || data.length == 0) return "";
-        for (int i = 0; i < data.length - 1; i++) {
-            builder.append(data[i] + " ");
-        }
-        builder.append(data[data.length - 1]);
-        return builder.toString();
     }
 
     public static void write(String f, Mesh mesh) throws IOException {
