@@ -4,7 +4,14 @@ import core.Edge;
 import core.Face;
 import core.Vertex;
 import core.Volume;
+import interfaces.Boundary;
+import sun.misc.IOUtils;
+import tools.Loader;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -173,60 +180,90 @@ public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K e
         return code;
     }
 
-    public Mesh<V,E,F,K> copy(){
-        Mesh<V,E,F,K> newMesh = new_mesh();
+    public <T extends Mesh> T copyToType(T o){
+        HashMap<Vertex, Integer> vertexHashMap = new HashMap<>();
+        HashMap<Edge, Integer> edgeHashMap = new HashMap<>();
+        HashMap<Face, Integer> faceHashMap = new HashMap<>();
 
-        ArrayList<V> vertices = new ArrayList<>();
-        ArrayList<E> edges = new ArrayList<>();
-        ArrayList<F> faces = new ArrayList<>();
-        ArrayList<K> volumes = new ArrayList<>();
 
-        HashMap<V, Integer> vertexHashMap = new HashMap<>();
-        HashMap<E, Integer> edgeHashMap = new HashMap<>();
-        HashMap<F, Integer> faceHashMap = new HashMap<>();
+        ArrayList<Vertex> new_vertices = new ArrayList<>();
+        ArrayList<Edge> new_edges = new ArrayList<>();
+        ArrayList<Face> new_faces = new ArrayList<>();
+        ArrayList<Volume> new_volumes = new ArrayList<>();
 
-        for(V v:this.vertices){
-            V newVert = new_vertex(
-                    v.getX(),
-                    v.getY(),
-                    v.getZ()
-            );
-            newVert.bindData(Arrays.copyOf(v.getData(), v.getData().length));
-            vertices.add(newVert);
-            vertexHashMap.put(v, vertices.size()-1);
-        }for(E e:this.edges){
-            E newEdge = new_edge(
-                    vertices.get(vertexHashMap.get(e.getV1())),
-                    vertices.get(vertexHashMap.get(e.getV2()))
-            );
-            newEdge.bindData(Arrays.copyOf(e.getData(), e.getData().length));
-            edges.add(newEdge);
-            edgeHashMap.put(e, edges.size()-1);
-        }for(F f:this.faces){
-            Object[] e = new Object[f.getBoundaries().length];
-            for(int i = 0; i < f.getBoundaries().length; i++){
-                e[i] = edges.get(edgeHashMap.get(f.getBoundaries()[i]));
+        for (int i = 0; i < vertices.size(); i++) {
+            Vertex v = vertices.get(i);
+            vertexHashMap.put(v, i);
+            new_vertices.add(new_vertex(v.getX(), v.getY(), v.getZ()));
+        }
+        for (int i = 0; i < edges.size(); i++) {
+            Edge v = edges.get(i);
+            edgeHashMap.put(v, i);
+            new_edges.add(o.new_edge(
+                    new_vertices.get(vertexHashMap.get(v.getV1())),
+                    new_vertices.get(vertexHashMap.get(v.getV2()))
+            ));
+        }
+        for (int i = 0; i < faces.size(); i++) {
+            Face v = faces.get(i);
+            faceHashMap.put(v, i);
+
+            ArrayList<Edge> eg = new ArrayList<>();
+            for (Boundary e : v.getBoundaries()) {
+                eg.add(new_edges.get(edgeHashMap.get(e)));
             }
-            F newFace = new_face((E[]) e);
-            newFace.bindData(Arrays.copyOf(f.getData(), f.getData().length));
-            faces.add(newFace);
-            faceHashMap.put(newFace, faces.size()-1);
-        }for(K v:this.volumes){
-            Object[] e = new Object[v.getBoundaries().length];
-            for(int i = 0; i < v.getBoundaries().length; i++){
-                e[i] = edges.get(faceHashMap.get(v.getBoundaries()[i]));
+
+            new_faces.add(o.new_face(eg.toArray(o.empty_edge_array())));
+        }
+        for (Volume v : volumes) {
+            ArrayList<Face> eg = new ArrayList<>();
+            for (Boundary e : v.getBoundaries()) {
+                eg.add(new_faces.get(faceHashMap.get(e)));
             }
-            K newVolume = new_volume((F[]) e);
-            newVolume.bindData(Arrays.copyOf(v.getData(), v.getData().length));
-            volumes.add(newVolume);
+            new_volumes.add(o.new_volume(eg.toArray(o.empty_face_array())));
         }
 
-        newMesh.volumes = volumes;
-        newMesh.edges = edges;
-        newMesh.vertices = vertices;
-        newMesh.faces = faces;
+        HashSet<Edge> hashedEdges = new HashSet<>();
+        for (Edge e : edges) {
+            ArrayList<Edge> linked = e.getLinked_boundaries();
+            if (!hashedEdges.contains(linked.get(0))) {
+                hashedEdges.addAll(linked);
+                for (int i = 1; i < linked.size(); i++) {
 
-        return newMesh;
+                    Edge e1 = new_edges.get(
+                            edgeHashMap.get(linked.get(0)));
+                    Edge e2 = new_edges.get(
+                            edgeHashMap.get(linked.get(i)));
+
+                    e1.link(e2);
+                }
+            }
+        }
+        HashSet<Face> hashedFaces = new HashSet<>();
+        for (Face fc : faces) {
+            ArrayList<Face> linked = fc.getLinked_boundaries();
+            if (!hashedFaces.contains(linked.get(0))) {
+                for (int i = 1; i < linked.size(); i++) {
+
+                    Face e1 = new_faces.get(
+                            faceHashMap.get(linked.get(0)));
+                    Face e2 = new_faces.get(
+                            faceHashMap.get(linked.get(i)));
+
+                    e1.link(e2);
+                }
+            }
+        }
+        T m = (T)o.new_mesh();
+        m.vertices = new_vertices;
+        m.edges = new_edges;
+        m.volumes = new_volumes;
+        m.faces = new_faces;
+        return m;
+    }
+
+    public Mesh<V,E,F,K> copy(){
+        return copyToType(this);
     }
 
     public abstract Mesh<V,E,F,K> new_mesh();
@@ -238,6 +275,12 @@ public abstract class Mesh<V extends Vertex, E extends Edge, F extends Face, K e
     public abstract F new_face(E... edges);
 
     public abstract K new_volume(F... faces);
+
+    public abstract F[] empty_face_array();
+
+    public abstract E[] empty_edge_array();
+
+
 
 
 

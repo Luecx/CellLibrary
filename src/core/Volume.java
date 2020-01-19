@@ -111,38 +111,7 @@ public class Volume extends Cell<Face, Volume, Volume> {
         ArrayList<Volume> volumes = new ArrayList<>();
         volumes.add(volume_1);
 
-        Mesh mesh = new Mesh(volumes) {
 
-            @Override
-            public Mesh new_mesh() {
-                return null;
-            }
-
-            @Override
-            public Vertex new_vertex(double x, double y, double z) {
-                return null;
-            }
-
-            @Override
-            public Edge new_edge(Vertex v1, Vertex v2) {
-                return null;
-            }
-
-            @Override
-            public Face new_face(Edge[] edges) {
-                return null;
-            }
-
-            @Override
-            public Volume new_volume(Face... faces) {
-                return null;
-            }
-        };
-
-        Loader.write("tes.mesh", mesh);
-
-        Loader.load("tes.mesh", mesh);
-        Loader.write("out.mesh", mesh);
 
     }
 

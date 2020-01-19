@@ -4,6 +4,7 @@ import core.Edge;
 import core.Face;
 import core.Vertex;
 import core.vector.DenseVector;
+import core.vector.Vector2d;
 import core.vector.Vector3d;
 import interfaces.Boundary;
 
@@ -57,6 +58,25 @@ public class Tools {
             if(k.equals(v)) return true;
         }
         return false;
+    }
+
+    public static Vector2d circumCenter(Vertex a, Vertex b, Vertex c){
+
+        double a_square = a.getX() * a.getX() + a.getY() * a.getY();
+        double b_square = b.getX() * b.getX() + b.getY() * b.getY();
+        double c_square = c.getX() * c.getX() + c.getY() * c.getY();
+
+        double d = 2 * (a.getX() * (b.getY()-c.getY()) + b.getX() * (c.getY()-a.getY()) + c.getX() * (a.getY() - b.getY()));
+        double x = 1 / d *
+                (a_square * (b.getY()-c.getY()) +
+                        b_square * (c.getY()-a.getY()) +
+                        c_square * (a.getY()-b.getY()));
+        double y = 1 / d *
+                (a_square * (c.getX()-b.getX()) +
+                        b_square * (a.getX()-c.getX()) +
+                        c_square * (b.getX()-a.getX()));
+
+        return new Vector2d(x,y);
     }
 
     public static HashMap<Vertex, Integer> count(Vertex... ar){

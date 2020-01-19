@@ -22,7 +22,7 @@ public class Loader {
         if (ar.length - beginIndex == 0) return null;
         double[] out = new double[ar.length - beginIndex];
         for (int i = beginIndex; i < ar.length; i++) {
-            out[i-beginIndex] = Double.parseDouble(ar[i]);
+            out[i - beginIndex] = Double.parseDouble(ar[i]);
         }
         return out;
     }
@@ -40,14 +40,11 @@ public class Loader {
 
     public static void load(String f, Mesh mesh) throws IOException {
         File file = new File(f);
-
         BufferedReader br = new BufferedReader(new FileReader(file));
-
         ArrayList<Vertex> vertices = new ArrayList<>();
         ArrayList<Edge> edges = new ArrayList<>();
         ArrayList<Face> faces = new ArrayList<>();
         ArrayList<Volume> volumes = new ArrayList<>();
-
         String st;
         while ((st = br.readLine()) != null) {
             st = st.replace("  ", " ");
@@ -80,7 +77,6 @@ public class Loader {
                 if (split[1].startsWith("s")) {
                     int fac = Integer.parseInt(split[1].substring(1));
                     Face[] fAr = new Face[fac];
-
                     for (int i = 2; i < fac + 2; i++) {
                         fAr[i - 2] = faces.get(Integer.parseInt(split[i]));
                     }
@@ -98,7 +94,6 @@ public class Loader {
                 }
             }
         }
-
         mesh.setEdges(edges);
         mesh.setVertices(vertices);
         mesh.setVolumes(volumes);
@@ -110,19 +105,14 @@ public class Loader {
     public static void write(String f, Mesh mesh) throws IOException {
         File file = new File(f);
         mesh.prepare_data();
-
         BufferedWriter br = new BufferedWriter(new FileWriter(file));
-
         ArrayList<Vertex> vertices = mesh.getVertices();
         ArrayList<Edge> edges = mesh.getEdges();
         ArrayList<Face> faces = mesh.getFaces();
         ArrayList<Volume> volumes = mesh.getVolumes();
-
         HashMap<Vertex, Integer> vertexHashMap = new HashMap<>();
         HashMap<Edge, Integer> edgeHashMap = new HashMap<>();
         HashMap<Face, Integer> faceHashMap = new HashMap<>();
-
-
         for (int i = 0; i < vertices.size(); i++) {
             Vertex v = vertices.get(i);
             vertexHashMap.put(v, i);
@@ -132,7 +122,6 @@ public class Loader {
                     v.getZ() + " " +
                     writeData(v) + "\n");
         }
-
         for (int i = 0; i < edges.size(); i++) {
             Edge v = edges.get(i);
             edgeHashMap.put(v, i);
@@ -141,32 +130,24 @@ public class Loader {
                     vertexHashMap.get(v.getV2()) + " " +
                     writeData(v) + "\n");
         }
-
         for (int i = 0; i < faces.size(); i++) {
             Face v = faces.get(i);
             faceHashMap.put(v, i);
-
-
             br.write("f s" + v.getBoundaries().length);
             for (Boundary e : v.getBoundaries()) {
                 Edge edg = (Edge) e;
                 br.write(" " + edgeHashMap.get(edg));
             }
             br.write(" " + writeData(v) + "\n");
-
         }
-
         for (Volume v : volumes) {
-
             br.write("k s" + v.getBoundaries().length);
             for (Boundary e : v.getBoundaries()) {
                 Face edg = (Face) e;
                 br.write(" " + faceHashMap.get(edg));
             }
             br.write(" " + writeData(v) + "\n");
-
         }
-
         HashSet<Edge> hashedEdges = new HashSet<>();
         for (Edge e : edges) {
             ArrayList<Edge> linked = e.getLinked_boundaries();
@@ -179,7 +160,6 @@ public class Loader {
                 }
             }
         }
-
         HashSet<Face> hashedFaces = new HashSet<>();
         for (Face fc : faces) {
             ArrayList<Face> linked = fc.getLinked_boundaries();
@@ -191,9 +171,7 @@ public class Loader {
                 }
             }
         }
-
         br.close();
-
     }
 
 }

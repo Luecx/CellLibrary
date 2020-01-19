@@ -4,6 +4,9 @@ import core.vector.Vector3d;
 import interfaces.Cell;
 import tools.Tools;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class Edge extends Cell<Vertex, Edge, Face> {
 
     public Edge() {
@@ -26,6 +29,12 @@ public class Edge extends Cell<Vertex, Edge, Face> {
     public double integral() {
         return getV1().getPosition().sub(
                 getV2().getPosition()).length();
+    }
+
+    public void swapVertices() {
+        Vertex v1 = getV1();
+        this.vertices[0] = this.vertices[1];
+        this.vertices[1] = v1;
     }
 
     public Vertex getV1() {
@@ -64,4 +73,10 @@ public class Edge extends Cell<Vertex, Edge, Face> {
         return false;
     }
 
+
+
+    @Override
+    public String toString() {
+        return "Edge{" +getV1().getPosition() + ", " + getV2().getPosition() + "}";
+    }
 }
